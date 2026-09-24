@@ -430,11 +430,12 @@ impl<T: Config> Pallet<T> {
 		let mut payout = BalanceOf::<T>::zero();
 		let last = region.begin + contribution.length.min(max_timeslices);
 		for r in region.begin..last {
+			let Some(mut pool_record) = InstaPoolHistory::<T>::get(r) else { continue };
+			let Some(total_payout) = pool_record.maybe_payout else { break };
+
 			region.begin = r + 1;
 			contribution.length.saturating_dec();
 
-			let Some(mut pool_record) = InstaPoolHistory::<T>::get(r) else { continue };
-			let Some(total_payout) = pool_record.maybe_payout else { break };
 			let p = total_payout
 				.saturating_mul(contributed_parts.into())
 				.checked_div(&pool_record.private_contributions.into())
